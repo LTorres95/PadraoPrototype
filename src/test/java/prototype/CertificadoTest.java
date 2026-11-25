@@ -1,101 +1,64 @@
 package prototype;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CertificadoTest {
 
-    private CertificadoParticipacao modelo;
-
-    @BeforeEach
-    void criarModelo() {
-        modelo = new CertificadoParticipacao("Semana da Computação UFJF", 20);
-        modelo.adicionarAssinatura("Coordenação do DCC");
-    }
-
     @Test
-    void deveCriarCloneComOsMesmosDadosDoModelo() {
-        CertificadoParticipacao clone = (CertificadoParticipacao) modelo.clonar();
+    void deveClonarCertificadoComOsMesmosDados() throws CloneNotSupportedException {
+        Certificado modelo = new Certificado("Ana", new Evento("Semana da Computação UFJF", 20));
+
+        Certificado clone = modelo.clone();
 
         assertNotSame(modelo, clone);
-        assertEquals("Semana da Computação UFJF", clone.getEvento());
-        assertEquals(20, clone.getCargaHoraria());
-        assertEquals(List.of("Coordenação do DCC"), clone.getAssinaturas());
+        assertEquals("Ana", clone.getAluno());
+        assertEquals("Semana da Computação UFJF", clone.getEvento().getNome());
+        assertEquals(20, clone.getEvento().getCargaHoraria());
     }
 
     @Test
-    void deveAlterarAlunoDoCloneSemAlterarModelo() {
-        Certificado clone = modelo.clonar();
+    void deveAlterarAlunoDoCloneSemAlterarOriginal() throws CloneNotSupportedException {
+        Certificado modelo = new Certificado("Ana", new Evento("Semana da Computação UFJF", 20));
 
-        clone.setAluno("Ana");
+        Certificado clone = modelo.clone();
+        clone.setAluno("Pedro");
 
-        assertNull(modelo.getAluno());
-        assertEquals("Ana", ((CertificadoParticipacao) clone).getAluno());
+        assertEquals("Ana", modelo.getAluno());
+        assertEquals("Pedro", clone.getAluno());
     }
 
     @Test
-    void deveCopiarListaDeAssinaturasDoModelo() {
-        Certificado clone = modelo.clonar();
+    void deveClonarTambemOEvento() throws CloneNotSupportedException {
+        Certificado modelo = new Certificado("Ana", new Evento("Semana da Computação UFJF", 20));
 
-        clone.adicionarAssinatura("Direção do ICE");
+        Certificado clone = modelo.clone();
 
-        assertEquals(List.of("Coordenação do DCC"), modelo.getAssinaturas());
-        assertEquals(List.of("Coordenação do DCC", "Direção do ICE"),
-                ((CertificadoParticipacao) clone).getAssinaturas());
+        assertNotSame(modelo.getEvento(), clone.getEvento());
     }
 
     @Test
-    void deveEmitirCertificadoDeParticipacao() {
-        Certificado certificado = modelo.clonar();
-        certificado.setAluno("Ana");
+    void deveAlterarEventoDoCloneSemAlterarOriginal() throws CloneNotSupportedException {
+        Certificado modelo = new Certificado("Ana", new Evento("Semana da Computação UFJF", 20));
 
-        assertEquals("Certificamos que Ana participou da Semana da Computação UFJF,"
-                + " com carga horária de 20 horas. Assinado por: Coordenação do DCC.", certificado.emitir());
+        Certificado clone = modelo.clone();
+        clone.getEvento().setNome("Maratona de Programação");
+        clone.getEvento().setCargaHoraria(8);
+
+        assertEquals("Semana da Computação UFJF", modelo.getEvento().getNome());
+        assertEquals(20, modelo.getEvento().getCargaHoraria());
     }
 
     @Test
-    void deveEmitirCertificadoDePalestrante() {
-        CertificadoPalestrante modeloPalestrante = new CertificadoPalestrante("Semana da Computação UFJF", 2);
-        modeloPalestrante.adicionarAssinatura("Coordenação do DCC");
+    void deveEmitirCertificadoDoClone() throws CloneNotSupportedException {
+        Certificado modelo = new Certificado("Ana", new Evento("Semana da Computação UFJF", 20));
 
-        CertificadoPalestrante certificado = (CertificadoPalestrante) modeloPalestrante.clonar();
-        certificado.setAluno("Pedro");
-        certificado.setPalestra("Padrões de Projeto na Prática");
+        Certificado clone = modelo.clone();
+        clone.setAluno("Pedro");
 
-        assertEquals("Certificamos que Pedro ministrou a palestra \"Padrões de Projeto na Prática\""
-                + " na Semana da Computação UFJF, com carga horária de 2 horas."
-                + " Assinado por: Coordenação do DCC.", certificado.emitir());
-        assertNull(modeloPalestrante.getPalestra());
-    }
-
-    @Test
-    void deveEntregarCopiasNovasDoRegistro() {
-        RegistroCertificados registro = new RegistroCertificados();
-        registro.registrar("participacao", modelo);
-
-        Certificado primeiro = registro.obter("participacao");
-        Certificado segundo = registro.obter("participacao");
-        primeiro.setAluno("Ana");
-        segundo.setAluno("Pedro");
-
-        assertNotSame(primeiro, segundo);
-        assertNotSame(modelo, primeiro);
         assertEquals("Certificamos que Pedro participou da Semana da Computação UFJF,"
-                + " com carga horária de 20 horas. Assinado por: Coordenação do DCC.", segundo.emitir());
-        assertNull(modelo.getAluno());
-    }
-
-    @Test
-    void deveLancarExcecaoParaModeloNaoRegistrado() {
-        RegistroCertificados registro = new RegistroCertificados();
-
-        assertThrows(IllegalArgumentException.class, () -> registro.obter("inexistente"));
+                + " com carga horária de 20 horas.", clone.emitir());
     }
 }
